@@ -28,6 +28,9 @@ function main()
         scene.add(light);
     }
 
+    // apply rotation on all objects in this array.
+    const objs = [];
+
     // // setting up stars.
     // const starGeo = new THREE.Geometry();
     // for (let i = 0;i < 6000;i++)
@@ -49,13 +52,24 @@ function main()
     // stars = new THREE.Points(starMaterial, starGeo);
     // scene.add(stars);
 
+    const Sgeometry = new THREE.SphereGeometry(0.25, 12, 12);
+    for (let i = 0;i < 500;i++)
+    {
+        const material = new THREE.MeshBasicMaterial({color:0xFFFFFF});
+        const star = new THREE.Mesh(Sgeometry, material);
+        // now to scatter them lets assume we are in a 3D box. then we scatter them all around the box.
+        // size of the box matters.
+        star.position.set(200 * Math.random() - 100, 200 * Math.random() - 100, 200 * Math.random() - 100);
+        scene.add(star);
+        objs.push(star);
+    }
 
-    const geometry = new THREE.SphereGeometry(100, 32, 32);
-    const material = new THREE.MeshPhongMaterial();
-    material.side = THREE.BackSide;
-    material.map = THREE.ImageUtils.loadTexture('images/stars.jpg');
-    const stars = new THREE.Mesh(geometry, material);
-    scene.add(stars);
+    // const geometry = new THREE.SphereGeometry(100, 32, 32);
+    // const material = new THREE.MeshPhongMaterial();
+    // material.side = THREE.BackSide;
+    // material.map = THREE.ImageUtils.loadTexture('images/stars.jpg');
+    // const stars = new THREE.Mesh(geometry, material);
+    // scene.add(stars);
 
     const Egeometry = new THREE.SphereGeometry(1, 32, 32);
     const Ematerial = new THREE.MeshPhongMaterial({side:THREE.DoubleSide});
@@ -66,11 +80,14 @@ function main()
     Ematerial.specular = new THREE.Color('grey');
     const earth = new THREE.Mesh(Egeometry, Ematerial);
     scene.add(earth);
+    objs.push(earth)
 
     // animate here.
     function animate(time)
     {
-        earth.rotation.y = time / 2000;
+        objs.forEach((obj, idx) => {
+            obj.rotation.y = time / 2000;
+        })
     }
 
     // render here.
