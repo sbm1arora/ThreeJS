@@ -1,6 +1,20 @@
 import * as THREE from './node_modules/three/build/three.module.js'
 import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r125/examples/jsm/controls/OrbitControls.js';
 
+class SceneManager
+{
+    constructor(scene, renderer, camera)
+    {
+        this.scene = scene;
+        this.renderer = renderer;
+        this.camera = camera;
+    }
+    render()
+    {
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
 class BoxGameObject
 {
     constructor(length, height, depth, color)
@@ -53,23 +67,26 @@ main();
 function main()
 {
 
+    let state = 0;
     // this is the basic setup for the game.
     const canvas = document.querySelector('#c');
     const renderer = new THREE.WebGLRenderer({canvas});
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const gameCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const scene = new THREE.Scene();
     const startScene = new THREE.Scene();
     
 
+    const sceneManager = new SceneManager(scene, renderer, gameCamera);
+
     // temporary 
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(gameCamera, renderer.domElement);
 
     window.addEventListener('resize', function() {
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.aspect = window.innerWidth / window,innerHeight;
-        camera.updateProjectionMatrix();
+        sceneManager.renderer.setSize(window.innerWidth, window.innerHeight);
+        sceneManager.camera.aspect = window.innerWidth / window,innerHeight;
+        sceneManager.camera.updateProjectionMatrix();
     })
 
     // making a space background.
@@ -84,6 +101,7 @@ function main()
             // size of the box matters.
             star.position.set(600 * Math.random() - 300, 600 * Math.random() - 300, 600 * Math.random() - 300);
             scene.add(star);
+            startScene.add(star);
         }
     }
 
@@ -103,9 +121,18 @@ function main()
     const baseMat = new THREE.MeshBasicMaterial({color:0xFFFF00});
     const base = new THREE.Mesh(baseGeo, baseMat);
     base.position.set(0, -.75, -49.75);
-    player.mesh.add(camera);
-    camera.position.set(0, 0.75, 3);
-    scene.add(base);
+    player.mesh.add(sceneManager.camera);
+    sceneManager.camera.position.set(0, 0.75, 3);
+    sceneManager.scene.add(base);
+
+    // endScene setup
+    const geometry = new THREE.PlaneGeometry(5, 5, 1);
+    const material = new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
+    const loader = new THREE.TextureLoader();
+    material.map = loader.load('images/over.jpg');
+    const gameOver = new THREE.Mesh(geometry, material);
+    gameOver.position.set(0, 0, -2);
+    startScene.add(gameOver);
 
 
     // setting up the enemies.
@@ -117,7 +144,7 @@ function main()
             const enemy = new BoxGameObject(0.5, 0.5, 0.5, 'blue')
             enemy.mesh.position.set(4 * Math.random() - 2, 0, -startPos);
             startPos += 10 * Math.random() + 5;
-            scene.add(enemy.mesh);
+            sceneManager.scene.add(enemy.mesh);
             enemies.push(enemy);
         }
     }
@@ -126,29 +153,36 @@ function main()
     // we do not need to make this function but just for help.
     function animate(time)
     {
-        player.update(10, time);
-        
-        if (player.mesh.position.z <= -200)
+        if (state == 0)
         {
-            player.mesh.position.z = 0;
-        }
+            player.update(50);
+            
+            if (player.mesh.position.z <= -200)
+            {
+                player.mesh.position.z = 0;
+            }
 
-        document.onkeypress = function (event) {
-            if (event.keyCode == 97)
-            {
-                player.left();
+            document.onkeypress = function (event) {
+                if (event.keyCode == 97)
+                {
+                    player.left();
+                }
+                else if (event.keyCode == 100)
+                {
+                    player.right();
+                }
             }
-            else if (event.keyCode == 100)
-            {
-                player.right();
-            }
+        }
+        else
+        {
+            gameOver.rotation.y = time / 1000;
         }
     }
     
     // this function renders all the changes and the scene.
-    function render(scene)
+    function render()
     {
-        renderer.render(scene, camera);
+        sceneManager.render();
     }
     
     // update function or the looping function.
@@ -156,14 +190,37 @@ function main()
     function update(time)
     {
         animate(time);
-        enemies.forEach( (enemy) => {
-            if (enemy.didCollide(player))
-            {
-                renderer.render(startScene, camera);
-            }
-        })  
+        render();
+
+        if (state == 0)
+        {
+            enemies.forEach( (enemy) => {
+                if (enemy.didCollide(player))
+                {
+                    sceneManager.scene = startScene;
+                    const overCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+                    sceneManager.camera = overCamera;
+                    sceneManager.camera.position.set(0, 0, 5);
+                    state = 1;
+                }
+            })
+        }  
         // starting the loop for each frame.
         // this is used other than simply calling the update function as this stops rendering when away from the tab.
+        if (state != 0)
+        {
+            document.onkeypress = function (event)
+            {
+                if (event.keyCode == 13)
+                {
+                    sceneManager.scene = scene;
+                    state = 0;
+                    player.mesh.position.set(0, 0, -250);
+                    sceneManager.camera = gameCamera;
+                }
+            }
+        }
+
         requestAnimationFrame(update);
     }
     update();

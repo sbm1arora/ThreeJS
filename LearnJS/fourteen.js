@@ -74,15 +74,35 @@ function main()
     const box = new BoxMesh(0.25, 0.25, 0.25, 'white');
     const secondBox = new BoxMesh(3, 0.25, 10, 'red');
     secondBox.mesh.position.set(0, -3, 0);
-    scene.add(box.mesh);
-    scene.add(secondBox.mesh);
+    // scene.add(box.mesh);
+    // scene.add(secondBox.mesh);
+
+    const loader = new THREE.FontLoader();
+
+    loader.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+        const geometry = new THREE.TextGeometry( 'Hello three.js!', {
+            font: font,
+            size: 80,
+            height: 5,
+            curveSegments: 12,
+            bevelEnabled: true,
+            bevelThickness: 10,
+            bevelSize: 8,
+            bevelOffset: 0,
+            bevelSegments: 5
+        });
+        const material = new THREE.MeshBasicMaterial({color:'white'});
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(0, 1, -10);
+        scene.add(mesh);
+    });
 
     function animate()
     {
         box.applyGravity();
         if (box.didCollide(secondBox))
         {
-            console.log("collision");
+            // console.log("collision");
         }
     }
 
