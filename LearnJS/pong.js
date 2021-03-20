@@ -44,19 +44,26 @@ class Ball
             this.dy *= -1
         }
     }
-    restart()
+    restart(paddle1, paddle2)
     {
-        if (this.mesh.position.x > 8 || this.mesh.position.x < -8)
+        if (this.mesh.position.x > 8)
         {
             this.dx *= -1;
             this.reset();
+            paddle2.lives -= 1;
+        }
+        if (this.mesh.position.x < -8)
+        {
+            this.dx *= -1;
+            this.reset();
+            paddle1.lives -= 1;
         }
     }
     reset()
     {
         const sx = this.dx > 0 ? 1 : -1;
         const sy = this.dy > 0 ? 1 : -1;
-
+    
         const dx = sx * ( Math.random() * 2 + this.incSpeed );
         const dy = sy * ( Math.random() * 2 + this.incSpeed );
         this.mesh.position.set(0, 0, 0);
@@ -84,6 +91,7 @@ class Paddle
         this.dy = 0.1;
         this.length = length;
         this.breadth = breadth;
+        this.lives = 3;
         this.geometry = new THREE.BoxGeometry(length, breadth, 0.000001);
         this.material = new THREE.MeshBasicMaterial({color});
         this.mesh = new THREE.Mesh(this.geometry, this.material);
@@ -118,7 +126,7 @@ function main()
         sceneManager.camera.updateProjectionMatrix();
     });
 
-    const ball = new Ball(0.15, 0xFFFFFF, NaN, Math.random() * 2, Math.random() * 2);
+    const ball = new Ball(0.15, 0xFFFFFF, NaN, Math.random() * 10, Math.random() * 10);
     sceneManager.scene.add(ball.mesh);
 
     const paddle1 = new Paddle(-6.5, 0, 0.25, 2, 0xFFFF00);
@@ -150,8 +158,13 @@ function main()
     {
         ball.move();
         ball.wallCollision();
-        ball.restart();
-        if (ball.paddleCollision(paddle1) || ball.paddleCollision(paddle2))
+        ball.restart(paddle1, paddle2);
+        if (ball.paddleCollision(paddle1))
+        {
+            ball.dx *= -1;
+            ball.dy *= -1;
+        }
+        if (ball.paddleCollision(paddle2))
         {
             ball.dx *= -1;
             ball.dy *= -1;
@@ -184,7 +197,10 @@ function main()
 
     function update(time)
     {
-        animate();
+        if (paddle1.lives > 0 && paddle2.lives > 0)
+        {
+            animate();
+        }
         render();
         requestAnimationFrame(update);
     }
