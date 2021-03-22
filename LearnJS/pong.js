@@ -4,6 +4,19 @@ import {OrbitControls} from 'https://threejsfundamentals.org/threejs/resources/t
 // const dx = Math.random() * 2;
 // const dy = Math.random() * 2;
 
+// setup for displaying frame rate.
+function CreateStats()
+{
+    var stats = new Stats();
+    stats.setMode(0);
+
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0';
+    stats.domElement.style.top = '0';
+
+    return stats;
+}
+
 class SceneManager
 {
     constructor(scene, camera, renderer)
@@ -120,6 +133,10 @@ function main()
 
     const sceneManager = new SceneManager(gameScene, gameCamera, renderer);
 
+
+    let stats = new CreateStats();
+    document.body.appendChild(stats.domElement);
+
     window.addEventListener('resize', function() {
         sceneManager.renderer.setSize(window.innerWidth, window.innerHeight);
         sceneManager.camera.aspect = window.innerWidth / window.innerHeight;
@@ -137,7 +154,6 @@ function main()
     document.body.appendChild(sceneManager.renderer.domElement);
     const controls = new OrbitControls(sceneManager.camera, sceneManager.renderer.domElement);
 
-    // Fuck the BOX.
     // Bounding Box.
     // {
     //     const size = 2;
@@ -201,6 +217,7 @@ function main()
         {
             animate();
         }
+        stats.update();
         render();
         requestAnimationFrame(update);
     }
